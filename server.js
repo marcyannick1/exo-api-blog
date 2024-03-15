@@ -42,7 +42,7 @@ app.post("/login", async (req, res) => {
     }
 })
 
-app.post('/user', async (req, res) => {
+app.post('/register', async (req, res) => {
     const { nom, prenom, email, pseudo, password } = req.body;
     const hashedPassword = hashPassword(password);
     try {
@@ -91,6 +91,9 @@ app.get('/create-article', (req, res) =>{
 
 app.get('/login', (req, res) =>{
     res.sendFile('src/views/login.html', {root: __dirname })
+});
+app.get('/register', (req, res) =>{
+    res.sendFile('src/views/register.html', {root: __dirname })
 });
 
 app.use((req, res) => {
