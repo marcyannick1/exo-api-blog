@@ -1,6 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const User = require("./src/models/users");
+const Articles = require("./src/models/articles");
+const authMiddleware = require("./src/controller/auth")
+const { checkPassword, hashPassword } = require("./src/utils/bcrypt");
+const { jwtSign } = require("./src/utils/jwt");
 dotenv.config();
 
 const app = express();
@@ -17,7 +22,66 @@ app.get("/", (req, res) => {
     return res.status(200).send("Hello world");
 });
 
-require('./src/routes')(app)
+app.post("/login", authMiddleware, async (req, res) => {
+    if (!req.body) return res.status(400).json({ msg: 'BAD REQUEST BODY IS REQUIRED'})
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ where: { email } });
+
+        if (!user || !checkPassword(password, user.password)) {
+            return res.status(401).send({ error: "Login failed! Check authentication credentials" });
+        }
+
+        const token = await jwtSign({id: user.id});
+        await User.update({token}, {where: {id: user.id}})
+
+        res.status(200).json({ user, token });
+    } catch (error) {
+        res.status(400).send({ error: error.message });
+    }
+})
+
+app.post('/user', async (req, res) => {
+    const { nom, prenom, email, pseudo, password } = req.body;
+    const hashedPassword = hashPassword(password);
+    try {
+        const user = await User.create({ nom, prenom, email, pseudo, password: hashedPassword });
+
+        if (!user.id){
+            res.status(400).json({ msg: 'BAD REQUEST'})
+        }
+        
+        res.status(201).send({ user });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+})
+
+app.post('/create-article', authMiddleware, async (req, res) =>{
+    const { nom, contenu, createdAt, userId } = req.body;
+    try {
+        const article = await Articles.create({nom, contenu, createdAt, userId})
+        if (!article.id){
+            res.status(400).json({ msg: 'BAD REQUEST'})
+        }
+        return res.status(200).json({ msg: 'OK', article: article})
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+})
+
+app.get('/articles', authMiddleware, async (req, res) => {
+    try {
+      const articles = await Articles.findAll({
+        where: {
+          userId: req.user.id 
+        }
+      });
+      res.json(articles);
+    } catch (error) {
+      res.status(500).json({ error: 'Something went wrong' });
+    }
+  });
 
 app.use((req, res) => {
     return res.status(404).send("Not found");
