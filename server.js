@@ -6,6 +6,7 @@ const Articles = require("./src/models/articles");
 const authMiddleware = require("./src/controller/auth")
 const { checkPassword, hashPassword } = require("./src/utils/bcrypt");
 const { jwtSign } = require("./src/utils/jwt");
+const jwt = require('jsonwebtoken')
 dotenv.config();
 
 const app = express();
@@ -19,10 +20,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.get("/", (req, res) => {
-    return res.status(200).send("Hello world");
+    res.sendFile('src/views/index.html', {root: __dirname })
 });
 
-app.post("/login", authMiddleware, async (req, res) => {
+app.post("/login", async (req, res) => {
     if (!req.body) return res.status(400).json({ msg: 'BAD REQUEST BODY IS REQUIRED'})
     const { email, password } = req.body;
     try {
@@ -59,6 +60,7 @@ app.post('/user', async (req, res) => {
 
 app.post('/create-article', authMiddleware, async (req, res) =>{
     const { nom, contenu, createdAt, userId } = req.body;
+
     try {
         const article = await Articles.create({nom, contenu, createdAt, userId})
         if (!article.id){
@@ -82,6 +84,14 @@ app.get('/articles', authMiddleware, async (req, res) => {
       res.status(500).json({ error: 'Something went wrong' });
     }
   });
+
+app.get('/create-article', (req, res) =>{
+    res.sendFile('src/views/create-article.html', {root: __dirname })
+});
+
+app.get('/login', (req, res) =>{
+    res.sendFile('src/views/login.html', {root: __dirname })
+});
 
 app.use((req, res) => {
     return res.status(404).send("Not found");

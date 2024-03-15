@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Creer un article</title>
+    </head>
+    <body>
+        <div class="article-control">
+            <h2>Article Maker</h2>
+            <form id="form">
+                <fieldset>
+                    <legend>New Article</legend>
+                    <input type="text" name="title" id="title" />
+                    <textarea name="content" id="txt" cols="30" rows="10"></textarea>
+                    <button type="submit">Submit</button>
+                </fieldset>
+            </form>
+        </div>
+        <script defer>
+            const form = document.getElementById("form")
+
+            form.addEventListener("submit", function (event) {
+                event.preventDefault();
+
+                const nom = document.getElementById("title").value;
+                const contenu = document.getElementById("txt").value;
+                const userId = localStorage.getItem('userId')
+                const token = localStorage.getItem("token");
+
+                if (!token) {
+                    console.error("Token non trouvé, veuillez vous connecter.");
+                    return;
+                }
+
+                fetch("http://localhost:8080/create-article", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ nom, contenu, userId }),
+                })
+                    .then((response) => {
+                        if (!response.ok) {
+                            throw new Error("Échec de la création de l'article");
+                        }
+                        return response.json();
+                    })
+                    .then((data) => {
+                        console.log("Article créé avec succès:", data);
+
+                        window.location.href = "http://localhost:8080";
+                    })
+                    .catch((error) => {
+                        console.error("Erreur:", error);
+                    });
+            });
+        </script>
+    </body>
+</html>

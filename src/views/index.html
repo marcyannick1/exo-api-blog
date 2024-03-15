@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mes Articles</title>
+</head>
+<body>
+    <h1>Mes Articles</h1>
+    <div id="articles"></div>
+    <button onclick="location.href='http://localhost:8080/create-article'">Créer un Article</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = 'http://localhost:8080/login';
+            }
+
+            fetch('http://localhost:8080/articles', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(articles => {
+                console.log(articles)
+                const articlesContainer = document.getElementById('articles');
+                articles.forEach(article => {
+                    const articleElement = document.createElement('div');
+                    articleElement.textContent = `Nom: ${article.nom}, Contenu: ${article.contenu}`;
+                    articlesContainer.appendChild(articleElement);
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+</body>
+</html>
